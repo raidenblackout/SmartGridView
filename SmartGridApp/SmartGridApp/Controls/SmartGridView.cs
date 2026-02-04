@@ -339,6 +339,8 @@ namespace SmartGrid.Controls
             }
         }
 
+        private CancellationTokenSource? _layoutCts;
+
         private async Task RecalculateLayoutAsync(IEnumerable<IExpandableItem>? items)
         {
             if (items == null) return;
@@ -348,8 +350,11 @@ namespace SmartGrid.Controls
 
         private async Task RunLayoutUpdateAsync(int? dragIdx, int? targetIdx)
         {
-            // Debounce or lock could be used here
-            // For now, just run the calculation
+            // Cancel any pending layout calculation
+            _layoutCts?.Cancel();
+            _layoutCts = new CancellationTokenSource();
+            var token = _layoutCts.Token;
+
             if (ItemsSource is not IEnumerable<IExpandableItem> items)
             {
                 return;
@@ -361,16 +366,30 @@ namespace SmartGrid.Controls
                 return; // Wait for load
             }
 
-            // Use current state
-            var currentStates = items.Select(x => new CardStateSnapshot
+            try
             {
-                IsExpanded = x.IsExpanded
-            }).Cast<ICardState>().ToList();
+                // Usage of ToList() here snapshots the data on the UI thread, which is correct/safe
+                var currentStates = items.Select(x => new CardStateSnapshot
+                {
+                    IsExpanded = x.IsExpanded
+                }).Cast<ICardState>().ToList();
 
-            var config = new LayoutConfig(SmallCardSize, LargeCardSize);
-            var newSchema = await Task.Run(() => LayoutEngine.Calculate(currentStates, width, config, dragIdx, targetIdx));
+                var config = new LayoutConfig(SmallCardSize, LargeCardSize);
 
-            _layout.SwapSchema(newSchema);
+                // Run calculation on background thread
+                var newSchema = await Task.Run(() =>
+                {
+                    token.ThrowIfCancellationRequested();
+                    return LayoutEngine.Calculate(currentStates, width, config, dragIdx, targetIdx);
+                }, token);
+
+                // If we get here, we are not cancelled
+                _layout.SwapSchema(newSchema);
+            }
+            catch (OperationCanceledException)
+            {
+                // Ignored - newer update superceded this one
+            }
         }
 
         // Drag and Drop Logic

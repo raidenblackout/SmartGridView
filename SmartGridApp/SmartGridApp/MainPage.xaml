@@ -64,9 +64,34 @@
                                          </VisualState.Setters>
                                      </VisualState>
                                  </VisualStateGroup>
+                                 
+                                 <VisualStateGroup x:Name="ExpansionStates">
+                                     <VisualState x:Name="CollapsedState">
+                                         <VisualState.StateTriggers>
+                                             <StateTrigger IsActive="{x:Bind IsExpanded, Converter={StaticResource InverseBoolConverter}, Mode=OneWay}"/>
+                                         </VisualState.StateTriggers>
+                                         <VisualState.Setters>
+                                             <Setter Target="CollapsedContent.Visibility" Value="Visible"/>
+                                             <Setter Target="ExpandedContent.Visibility" Value="Collapsed"/>
+                                         </VisualState.Setters>
+                                     </VisualState>
+                                     <VisualState x:Name="ExpandedState">
+                                         <VisualState.StateTriggers>
+                                             <StateTrigger IsActive="{x:Bind IsExpanded, Mode=OneWay}"/>
+                                         </VisualState.StateTriggers>
+                                         <VisualState.Setters>
+                                             <Setter Target="CollapsedContent.Visibility" Value="Collapsed"/>
+                                             <Setter Target="ExpandedContent.Visibility" Value="Visible"/>
+                                             <!-- Change the root style for the expanded card -->
+                                             <Setter Target="RootGrid.Background" Value="#1E1E1E"/>
+                                             <Setter Target="RootGrid.BorderBrush" Value="#333333"/>
+                                         </VisualState.Setters>
+                                     </VisualState>
+                                 </VisualStateGroup>
                              </VisualStateManager.VisualStateGroups>
 
-                             <Grid>
+                             <!-- COLLAPSED DESIGN (Original) -->
+                             <Grid x:Name="CollapsedContent">
                                  <Grid.RowDefinitions>
                                      <RowDefinition Height="*"/>
                                      <RowDefinition Height="Auto"/>
@@ -94,17 +119,61 @@
                                          <TextBlock Text="{x:Bind DisplayIndex}" FontSize="18" FontWeight="Black" Foreground="#333333"/>
                                      </StackPanel>
 
-                                     <!-- RED EXPAND TRIGGER (Restored and Wired) -->
+                                     <!-- EXPAND BUTTON -->
                                      <Border Background="#E53935" CornerRadius="4" Padding="12,6" 
                                              HorizontalAlignment="Right" VerticalAlignment="Bottom"
                                              PointerPressed="OnExpandClicked">
                                          <TextBlock Text="EXPAND" Foreground="White" FontSize="11" FontWeight="Black"/>
                                      </Border>
                                  </Grid>
-
-                                 <!-- Selection Indicator Overlay -->
-                                 <Border x:Name="SelectionOverlay" Visibility="Collapsed" Background="#22007ACC" IsHitTestVisible="False"/>
                              </Grid>
+
+                             <!-- EXPANDED DESIGN (New, Bigger, Premium) -->
+                             <Grid x:Name="ExpandedContent" Visibility="Collapsed">
+                                 <Grid.ColumnDefinitions>
+                                     <ColumnDefinition Width="2*"/>
+                                     <ColumnDefinition Width="3*"/>
+                                 </Grid.ColumnDefinitions>
+
+                                 <!-- Hero Image on Left -->
+                                 <Image Grid.Column="0" Source="{x:Bind ImageUrl1}" Stretch="UniformToFill" VerticalAlignment="Stretch"/>
+                                 
+                                 <!-- Content on Right -->
+                                 <Grid Grid.Column="1" Padding="24">
+                                     <StackPanel Spacing="12">
+                                         <Border Background="#33FFFFFF" HorizontalAlignment="Left" CornerRadius="4" Padding="8,4">
+                                              <TextBlock Text="PREMIUM SELECTION" Foreground="#00E5FF" FontSize="10" FontWeight="Bold" CharacterSpacing="100"/>
+                                         </Border>
+                                         
+                                         <TextBlock Text="{x:Bind Title}" FontSize="32" FontWeight="Bold" Foreground="White" TextWrapping="Wrap"/>
+                                         
+                                         <TextBlock Text="This is the expanded view showing rich details about the donut. The layout has completely changed to a horizontal split design." 
+                                                    Foreground="#AAAAAA" FontSize="14" TextWrapping="Wrap" MaxLines="3"/>
+                                         
+                                         <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+                                              <Grid Width="40" Height="40" CornerRadius="20" Background="#333">
+                                                  <SymbolIcon Symbol="Favorite" Foreground="#E53935"/>
+                                              </Grid>
+                                              <Grid Width="40" Height="40" CornerRadius="20" Background="#333">
+                                                  <SymbolIcon Symbol="Share" Foreground="White"/>
+                                              </Grid>
+                                         </StackPanel>
+                                     </StackPanel>
+
+                                     <!-- COLLAPSE BUTTON -->
+                                     <Border Background="#444444" CornerRadius="4" Padding="16,8" 
+                                             HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                             PointerPressed="OnExpandClicked">
+                                         <StackPanel Orientation="Horizontal" Spacing="8">
+                                             <SymbolIcon Symbol="Back" Foreground="White"/>
+                                             <TextBlock Text="COLLAPSE" Foreground="White" FontSize="12" FontWeight="Bold"/>
+                                         </StackPanel>
+                                     </Border>
+                                 </Grid>
+                             </Grid>
+
+                             <!-- Selection Indicator Overlay -->
+                             <Border x:Name="SelectionOverlay" Visibility="Collapsed" Background="#22007ACC" IsHitTestVisible="False"/>
                          </Grid>
                  </DataTemplate>
               </controls:SmartGridView.ItemTemplate>
