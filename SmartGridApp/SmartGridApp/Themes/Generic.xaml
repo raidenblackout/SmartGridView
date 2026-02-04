@@ -4,6 +4,8 @@
     xmlns:local="using:SmartGrid.Controls">
 
     <Style TargetType="local:SmartGridView">
+        <Setter Property="SmallCardSize" Value="240,240" />
+        <Setter Property="LargeCardSize" Value="720,480" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:SmartGridView">

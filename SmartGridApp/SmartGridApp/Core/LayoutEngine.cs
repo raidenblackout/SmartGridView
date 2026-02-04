@@ -75,7 +75,7 @@ namespace SmartGrid.Core
                 var item = items[originalIndex];
                 bool isLarge = item.IsExpanded;
 
-                int itemWidthUnits = isLarge ? 2 : 1;
+                int itemWidthUnits = isLarge ? 3 : 1;
                 int itemHeightUnits = isLarge ? 2 : 1;
 
                 if (itemWidthUnits > columnCount) itemWidthUnits = columnCount;

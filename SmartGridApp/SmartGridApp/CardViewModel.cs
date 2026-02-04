@@ -2,6 +2,7 @@ using System;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI.Xaml.Media;
 using SmartGrid.Core;
 
 namespace SmartGridApp
@@ -13,6 +14,15 @@ namespace SmartGridApp
 
         [ObservableProperty]
         private string _displayIndex = string.Empty;
+
+        [ObservableProperty]
+        private ImageSource? _imageUrl1;
+
+        [ObservableProperty]
+        private ImageSource? _imageUrl2;
+
+        [ObservableProperty]
+        private bool _isSelected;
 
         private bool _isExpanded;
         public bool IsExpanded
@@ -27,6 +37,12 @@ namespace SmartGridApp
         private void RequestToggle()
         {
             ToggleRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        [RelayCommand]
+        private void Select()
+        {
+            IsSelected = !IsSelected;
         }
     }
 }
