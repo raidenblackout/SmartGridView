@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWinUI>true</UseWinUI>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Uno.WinUI" Version="5.2.161" />
+    <PackageReference Include="Uno.WinUI.Skia.Gtk" Version="5.2.161" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <PackageReference Include="Uno.UI.Adapter.Microsoft.Extensions.Logging" Version="5.2.161" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\**" />
+    <Page Include="**\*.xaml" Exclude="bin\**;obj\**" />
+    <Compile Update="**\*.xaml.cs">
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+    
+    <!-- Exclude Platform Specifics -->
+    <Compile Remove="Platforms\**\*.cs" />
+    <!-- Re-include Desktop (GTK/Skia) -->
+    <Compile Include="Platforms\Desktop\**\*.cs" />
+  </ItemGroup>
+  
+  <Target Name="BuildXaml" BeforeTargets="Build">
+    <!-- Manual XAML compilation target if needed, but Uno.WinUI should handle it -->
+  </Target>
+
+</Project>

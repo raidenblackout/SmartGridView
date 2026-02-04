@@ -1,0 +1,10 @@
+{
+  "background_color": "#ffffff",
+  "description": "SmartGridApp",
+  "display": "standalone",
+  "name": "SmartGridApp",
+  "short_name": "SmartGridApp",
+  "start_url": "/index.html",
+  "theme_color": "#ffffff",
+  "scope": "/"
+}
