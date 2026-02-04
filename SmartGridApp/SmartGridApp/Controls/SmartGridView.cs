@@ -57,11 +57,15 @@ namespace SmartGrid.Controls
                 // Update Arrange Stats
                 _arrangeCount++;
                 _totalArrangeTicks += metrics.ArrangeTicks;
-                if (metrics.ArrangeTicks > _maxArrangeTicks) _maxArrangeTicks = metrics.ArrangeTicks;
+                if (metrics.ArrangeTicks > _maxArrangeTicks)
+                {
+                    _maxArrangeTicks = metrics.ArrangeTicks;
+                    // Capture context for the worst case
+                    MaxArrangeDuration = $"{FormatTicks(_maxArrangeTicks)} [{metrics.StartIndex}-{metrics.EndIndex}] ({metrics.RealizedItems})";
+                }
 
                 ArrangeDuration = FormatTicks(metrics.ArrangeTicks);
                 AvgArrangeDuration = FormatTicks(_totalArrangeTicks / _arrangeCount);
-                MaxArrangeDuration = FormatTicks(_maxArrangeTicks);
             };
 
             // Subscribe to layout's request for refresh (e.g. during drag operation)

@@ -145,19 +145,21 @@ namespace SmartGrid.Views
                     element.Arrange(rect);
 
                     // Ghosting Logic
+                    double targetOpacity = 1.0;
                     if (_draggingIndex.HasValue && dataIndex == _draggingIndex.Value)
                     {
-                        element.Opacity = 0.4;
+                        targetOpacity = 0.4;
                     }
-                    else
+
+                    // Optimize Property Sets: Only write if changed (avoid DP overhead)
+                    if (element.Opacity != targetOpacity)
                     {
-                        element.Opacity = 1.0;
+                        element.Opacity = targetOpacity;
                     }
                 }
 
                 // --- METRICS LOGIC ---
                 // Item is visible if it intersects trueVisible
-                // We use a slightly more optimized check or just the standard intersection
                 bool isVisible = rect.Left < trueVisible.Right && rect.Right > trueVisible.Left &&
                                  rect.Top < trueVisible.Bottom && rect.Bottom > trueVisible.Top;
 
@@ -205,7 +207,7 @@ namespace SmartGrid.Views
             var rects = _currentSchema.ItemRects;
             int low = 0;
             int high = rects.Count - 1;
-            int result = 0;
+            int result = rects.Count; // Default to end (if no item > targetTop found, it means all are above)
 
             while (low <= high)
             {
