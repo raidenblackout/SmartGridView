@@ -28,6 +28,15 @@ namespace SmartGrid.Controls
             this.DefaultStyleKey = typeof(SmartGridView);
             _layout = new FastCardLayout();
 
+            // Subscribe to layout's metrics updates
+            _layout.MetricsUpdated += (s, metrics) =>
+            {
+                VisibleItemsCount = metrics.RealizedItems;
+                VisibleRangeStart = metrics.StartIndex;
+                VisibleRangeEnd = metrics.EndIndex;
+                ViewportRectString = $"{metrics.Viewport.X:F0}, {metrics.Viewport.Y:F0}, {metrics.Viewport.Width:F0}x{metrics.Viewport.Height:F0}";
+            };
+
             // Subscribe to layout's request for refresh (e.g. during drag operation)
             _layout.RequestLayoutRefresh += async (s, args) =>
             {
@@ -58,6 +67,42 @@ namespace SmartGrid.Controls
         public static readonly DependencyProperty ItemsSourceProperty =
             DependencyProperty.Register(nameof(ItemsSource), typeof(object), typeof(SmartGridView),
             new PropertyMetadata(null, OnItemsSourceChanged));
+
+        public static readonly DependencyProperty VisibleItemsCountProperty =
+            DependencyProperty.Register(nameof(VisibleItemsCount), typeof(int), typeof(SmartGridView), new PropertyMetadata(0));
+
+        public int VisibleItemsCount
+        {
+            get => (int)GetValue(VisibleItemsCountProperty);
+            private set => SetValue(VisibleItemsCountProperty, value);
+        }
+
+        public static readonly DependencyProperty VisibleRangeStartProperty =
+            DependencyProperty.Register(nameof(VisibleRangeStart), typeof(int), typeof(SmartGridView), new PropertyMetadata(-1));
+
+        public int VisibleRangeStart
+        {
+            get => (int)GetValue(VisibleRangeStartProperty);
+            private set => SetValue(VisibleRangeStartProperty, value);
+        }
+
+        public static readonly DependencyProperty VisibleRangeEndProperty =
+            DependencyProperty.Register(nameof(VisibleRangeEnd), typeof(int), typeof(SmartGridView), new PropertyMetadata(-1));
+
+        public int VisibleRangeEnd
+        {
+            get => (int)GetValue(VisibleRangeEndProperty);
+            private set => SetValue(VisibleRangeEndProperty, value);
+        }
+
+        public static readonly DependencyProperty ViewportRectStringProperty =
+            DependencyProperty.Register(nameof(ViewportRectString), typeof(string), typeof(SmartGridView), new PropertyMetadata("0,0,0x0"));
+
+        public string ViewportRectString
+        {
+            get => (string)GetValue(ViewportRectStringProperty);
+            private set => SetValue(ViewportRectStringProperty, value);
+        }
 
         public object ItemsSource
         {

@@ -133,8 +133,34 @@ namespace SmartGrid.Views
                 }
             }
 
+            // Report metrics
+            int realizedCount = 0;
+            int start = -1;
+            int end = -1;
+
+            if (itemCount > 0)
+            {
+                // Simple estimate for visual feedback
+                start = startIndex;
+                // Finding true realized range
+                for (int i = startIndex; i < itemCount; i++)
+                {
+                    if (i >= _currentSchema.ItemRects.Count) break;
+                    var rect = _currentSchema.ItemRects[i];
+                    if (rect.Top > visibleRect.Bottom) { end = i - 1; break; }
+                    if (i == itemCount - 1) end = i;
+                    realizedCount++;
+                }
+            }
+
+            MetricsUpdated?.Invoke(this, new LayoutMetrics(itemCount, realizedCount, start, end, visibleRect));
+
             return finalSize;
         }
+
+        public event System.EventHandler<LayoutMetrics>? MetricsUpdated;
+
+        public record LayoutMetrics(int TotalItems, int RealizedItems, int StartIndex, int EndIndex, Rect Viewport);
 
         private int FindFirstVisibleIndex(double viewportTop)
         {

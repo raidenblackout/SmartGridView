@@ -3,15 +3,41 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace SmartGridApp
 {
-    public class MainViewModel : ObservableObject
+    public partial class MainViewModel : ObservableObject
     {
         public ObservableCollection<CardViewModel> Cards { get; } = new ObservableCollection<CardViewModel>();
 
+        [ObservableProperty]
+        private int _cardCount = 100;
+
         public MainViewModel()
         {
-            for (int i = 0; i < 100; i++)
+            UpdateCardCollection();
+        }
+
+        partial void OnCardCountChanged(int value)
+        {
+            UpdateCardCollection();
+        }
+
+        private void UpdateCardCollection()
+        {
+            if (CardCount < 0) return;
+
+            // Simple diffing to avoid clearing the whole list
+            while (Cards.Count > CardCount)
             {
-                Cards.Add(new CardViewModel { Title = $"Card {i}", DisplayIndex = i.ToString() });
+                Cards.RemoveAt(Cards.Count - 1);
+            }
+
+            while (Cards.Count < CardCount)
+            {
+                int nextIndex = Cards.Count;
+                Cards.Add(new CardViewModel
+                {
+                    Title = $"Card {nextIndex}",
+                    DisplayIndex = nextIndex.ToString()
+                });
             }
         }
     }
