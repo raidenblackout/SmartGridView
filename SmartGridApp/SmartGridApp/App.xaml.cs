@@ -9,6 +9,10 @@ namespace SmartGridApp;
 
 public partial class App : Application
 {
+    // Persistent ViewModels to keep states alive per-page
+    public static MainViewModel MainPageViewModel { get; } = new MainViewModel();
+    public static MainViewModel SecondPageViewModel { get; } = new MainViewModel();
+
     /// <summary>
     /// Initializes the singleton application object. This is the first line of authored code
     /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -34,6 +38,7 @@ public partial class App : Application
         {
             // Create a Frame to act as the navigation context and navigate to the first page
             rootFrame = new Frame();
+            rootFrame.CacheSize = 10;
 
             // Place the frame in the current Window
             MainWindow.Content = rootFrame;

@@ -19,6 +19,8 @@ namespace SmartGrid.Views
             set { _manualViewport = value; InvalidateArrange(); }
         }
 
+        public bool HasSchema => _currentSchema != null;
+
         // Called by ViewModel/SmartGridView when background math is finished
         public void SwapSchema(LayoutSchema newSchema)
         {

@@ -4,12 +4,22 @@ namespace SmartGridApp;
 
 public sealed partial class MainPage : Page
 {
-    public MainViewModel ViewModel { get; } = new MainViewModel();
+    public MainViewModel ViewModel => App.MainPageViewModel;
 
     public MainPage()
     {
         this.InitializeComponent();
         this.NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Required;
+    }
+
+    protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+    }
+
+    protected override void OnNavigatedFrom(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    {
+        base.OnNavigatedFrom(e);
     }
 
     private void OnNavigateClicked(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)

@@ -4,7 +4,8 @@
       xmlns:local="using:SmartGridApp"
       xmlns:controls="using:SmartGrid.Controls"
       xmlns:viewmodels="using:SmartGridApp"
-      Background="White">
+      Background="White"
+      NavigationCacheMode="Required">
 
     <Page.Resources>
         <local:InverseBoolConverter x:Key="InverseBoolConverter"/>

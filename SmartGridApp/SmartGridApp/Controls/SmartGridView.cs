@@ -13,6 +13,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using SmartGrid.Core;
 using SmartGrid.Views;
+using SmartGridApp;
 
 namespace SmartGrid.Controls
 {
@@ -159,15 +160,13 @@ namespace SmartGrid.Controls
             if (_repeater != null)
             {
                 _repeater.Layout = _layout;
-
-                // Subscribe to element prepared for DragStarting setup
                 _repeater.ElementPrepared += OnElementPrepared;
             }
 
-            // Find ScrollViewer to track TRUE viewport
             _scroller = FindVisualParent<ScrollViewer>(_repeater);
             if (_scroller != null)
             {
+                _scroller.ViewChanged -= OnScrollViewerViewChanged;
                 _scroller.ViewChanged += OnScrollViewerViewChanged;
                 UpdateViewport();
             }
@@ -184,11 +183,18 @@ namespace SmartGrid.Controls
         {
             if (_scroller != null)
             {
+                // System.Console.WriteLine($">>>> SmartGridView UpdateViewport: Offset={_scroller.VerticalOffset}");
                 _layout.ManualViewport = new Rect(
                     _scroller.HorizontalOffset,
                     _scroller.VerticalOffset,
                     _scroller.ViewportWidth,
                     _scroller.ViewportHeight);
+
+                // Save offset to ViewModel for persistence
+                if (this.DataContext is MainViewModel vm)
+                {
+                    vm.ScrollOffset = _scroller.VerticalOffset;
+                }
             }
         }
 
@@ -219,17 +225,35 @@ namespace SmartGrid.Controls
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             // Initial layout calculation if needed
-            if (ItemsSource is IEnumerable<IExpandableItem> items && this.ActualWidth > 0)
+            // Only recalculate if we don't have a valid schema yet (to preserve scroll/state on cache)
+            if (ItemsSource is IEnumerable<IExpandableItem> items && this.ActualWidth > 0 && !_layout.HasSchema)
             {
                 _ = RecalculateLayoutAsync(items);
+            }
+
+            // Restore scroll position from ViewModel
+            if (_scroller != null && this.DataContext is MainViewModel vm && vm.ScrollOffset > 0)
+            {
+                _scroller.ChangeView(null, vm.ScrollOffset, null, true);
             }
         }
 
         private void OnSizeChanged(object sender, SizeChangedEventArgs e)
         {
-            if (e.NewSize.Width != e.PreviousSize.Width && ItemsSource is IEnumerable<IExpandableItem> items)
+            if (ItemsSource is IEnumerable<IExpandableItem> items && e.NewSize.Width > 0)
             {
-                _ = RecalculateLayoutAsync(items);
+                // Only recalculate if the width actually changed FROM a non-zero value.
+                // If previous width was 0, it means we are just being added to the tree (likely navigation),
+                // and if we already have a schema, we should KEEP it to preserve scroll/state.
+                if (e.PreviousSize.Width > 0 && e.NewSize.Width != e.PreviousSize.Width)
+                {
+                    _ = RecalculateLayoutAsync(items);
+                }
+                else if (!_layout.HasSchema)
+                {
+                    // If we have NO schema yet, we MUST calculate it now that we have width.
+                    _ = RecalculateLayoutAsync(items);
+                }
             }
         }
 
@@ -244,6 +268,13 @@ namespace SmartGrid.Controls
         private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var grid = (SmartGridView)d;
+
+            // Prevent redundant recalculations if the same collection is re-assigned (navigation cache behavior)
+            if (e.OldValue == e.NewValue && grid._layout.HasSchema)
+            {
+                return;
+            }
+
             if (e.NewValue is INotifyCollectionChanged newCollection)
             {
                 newCollection.CollectionChanged += grid.OnCollectionChanged;
@@ -261,7 +292,12 @@ namespace SmartGrid.Controls
                     item.ToggleRequested -= grid.OnItemToggleRequested;
                     item.ToggleRequested += grid.OnItemToggleRequested;
                 }
-                _ = grid.RecalculateLayoutAsync(items);
+
+                // Only trigger recalculate if there's actual size or if we truly need a fresh schema
+                if (grid.ActualWidth > 0)
+                {
+                    _ = grid.RecalculateLayoutAsync(items);
+                }
             }
         }
 
@@ -325,8 +361,9 @@ namespace SmartGrid.Controls
             }
         }
 
-        private async Task RecalculateLayoutAsync(IEnumerable<IExpandableItem> items)
+        private async Task RecalculateLayoutAsync(IEnumerable<IExpandableItem>? items)
         {
+            if (items == null) return;
             // Simple recalculate without state toggle
             await RunLayoutUpdateAsync(null, null);
         }
