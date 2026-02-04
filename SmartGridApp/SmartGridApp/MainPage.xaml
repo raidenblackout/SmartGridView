@@ -5,21 +5,21 @@
       xmlns:controls="using:SmartGrid.Controls"
       xmlns:viewmodels="using:SmartGridApp"
       Background="White">
-  <Grid Background="White">
-     <controls:SmartGridView ItemsSource="{x:Bind ViewModel.Cards}" Background="Transparent">
-         <controls:SmartGridView.ItemTemplate>
-            <DataTemplate x:DataType="viewmodels:CardViewModel">
-                   <Grid Background="LightGray" Margin="4" CornerRadius="4" MinWidth="100" MinHeight="100">
-                       <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                           <TextBlock Text="{x:Bind DisplayIndex}" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"/>
-                           <TextBlock Text="{x:Bind Title}" FontSize="12" Opacity="0.7" HorizontalAlignment="Center"/>
-                       </StackPanel>
-                        <Button Content="Expand" Command="{x:Bind RequestToggleCommand}" 
-                                VerticalAlignment="Bottom" HorizontalAlignment="Right"
-                                Margin="4"/>
-                   </Grid>
-            </DataTemplate>
-         </controls:SmartGridView.ItemTemplate>
-     </controls:SmartGridView>
-  </Grid>
+   <Grid Background="White">
+      <controls:SmartGridView ItemsSource="{x:Bind ViewModel.Cards}" Background="Transparent">
+          <controls:SmartGridView.ItemTemplate>
+             <DataTemplate x:DataType="local:CardViewModel">
+                    <Grid Background="LightGray" Margin="4" CornerRadius="4" MinWidth="100" MinHeight="100">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="{x:Bind DisplayIndex}" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{x:Bind Title}" FontSize="12" Opacity="0.7" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                         <Button Content="Expand" Command="{x:Bind RequestToggleCommand}" 
+                                 VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                                 Margin="4"/>
+                    </Grid>
+             </DataTemplate>
+          </controls:SmartGridView.ItemTemplate>
+      </controls:SmartGridView>
+   </Grid>
 </Page>

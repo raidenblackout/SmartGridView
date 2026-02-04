@@ -254,11 +254,10 @@ namespace SmartGrid.Controls
         private void OnItemDragStarting(UIElement sender, DragStartingEventArgs args)
         {
             if (_repeater == null) return;
-            int index = _repeater.GetElementIndex(sender);
+            int slotIndex = _repeater.GetElementIndex(sender);
 
-            // Use indexer to avoid "Key already added" exception if fired twice
-            args.Data.Properties["DragSourceIndex"] = index;
-            // args.DragUI.SetContentFromDataPackage(); // Not supported on Uno Skia Gtk yet
+            // Store the INITIAL slot index. This MUST stay constant during the drag.
+            args.Data.Properties["DragSourceSlot"] = slotIndex;
         }
 
         private void OnDragOver(object sender, DragEventArgs e)
@@ -266,43 +265,42 @@ namespace SmartGrid.Controls
             e.AcceptedOperation = DataPackageOperation.Move;
 
             Point p = e.GetPosition(_repeater!);
-            if (!e.DataView.Properties.TryGetValue("DragSourceIndex", out object? sourceIndexObj)) return;
-            int draggingIndex = (int)sourceIndexObj;
+            if (!e.DataView.Properties.TryGetValue("DragSourceSlot", out object? sourceSlotObj)) return;
+            int dragSourceSlot = (int)sourceSlotObj;
 
-            int hoverIndex = _layout.GetIndexAtPoint(p);
+            int targetSlot = _layout.GetIndexAtPoint(p);
 
-            if (hoverIndex != -1)
+            if (targetSlot != -1)
             {
                 // Update the layout visual (Shadow Map) via FastCardLayout
-                _layout.UpdateDragPosition(draggingIndex, hoverIndex);
+                _layout.UpdateDragPosition(dragSourceSlot, targetSlot);
             }
         }
 
         private void OnDrop(object sender, DragEventArgs e)
         {
-            if (!e.DataView.Properties.TryGetValue("DragSourceIndex", out object sourceIndexObj)) return;
-            int oldIndex = (int)sourceIndexObj;
+            if (!e.DataView.Properties.TryGetValue("DragSourceSlot", out object sourceSlotObj)) return;
+            int oldSlot = (int)sourceSlotObj;
 
             Point p = e.GetPosition(_repeater!);
-            int newIndex = _layout.GetIndexAtPoint(p);
+            int newSlot = _layout.GetIndexAtPoint(p);
 
             // 1. Clear the "Shadow Map" state
             _layout.ClearDragState();
 
             // 2. Update the REAL truth (ViewModel)
-            if (ItemsSource is IList list && oldIndex != newIndex && newIndex >= 0 && newIndex < list.Count)
+            if (ItemsSource is IList list && oldSlot != newSlot && newSlot >= 0 && newSlot < list.Count)
             {
                 try
                 {
                     dynamic dynamicCol = ItemsSource;
-                    dynamicCol.Move(oldIndex, newIndex);
+                    dynamicCol.Move(oldSlot, newSlot);
                 }
                 catch
                 {
-                    // Fallback move if .Move() doesn't exist
-                    var item = list[oldIndex];
-                    list.RemoveAt(oldIndex);
-                    list.Insert(newIndex, item!);
+                    var item = list[oldSlot];
+                    list.RemoveAt(oldSlot);
+                    list.Insert(newSlot, item!);
                 }
             }
             // If ItemsSource is ObservableCollection, the OnCollectionChanged will trigger RecalculateLayoutAsync
