@@ -23,6 +23,15 @@ namespace SmartGrid.Controls
         private SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
         private CancellationTokenSource? _navigatingCts = new CancellationTokenSource();
 
+        // Metric tracking fields
+        private long _totalLayoutTicks = 0;
+        private long _maxLayoutTicks = 0;
+        private int _layoutCount = 0;
+
+        private long _totalArrangeTicks = 0;
+        private long _maxArrangeTicks = 0;
+        private int _arrangeCount = 0;
+
         public SmartGridView()
         {
             this.DefaultStyleKey = typeof(SmartGridView);
@@ -36,8 +45,23 @@ namespace SmartGrid.Controls
                 VisibleRangeEnd = metrics.EndIndex;
                 ViewportRectString = $"{metrics.Viewport.X:F0}, {metrics.Viewport.Y:F0}, {metrics.Viewport.Width:F0}x{metrics.Viewport.Height:F0}";
 
+                // Update Layout Stats
+                _layoutCount++;
+                _totalLayoutTicks += metrics.LayoutTicks;
+                if (metrics.LayoutTicks > _maxLayoutTicks) _maxLayoutTicks = metrics.LayoutTicks;
+
                 LayoutDuration = FormatTicks(metrics.LayoutTicks);
+                AvgLayoutDuration = FormatTicks(_totalLayoutTicks / _layoutCount);
+                MaxLayoutDuration = FormatTicks(_maxLayoutTicks);
+
+                // Update Arrange Stats
+                _arrangeCount++;
+                _totalArrangeTicks += metrics.ArrangeTicks;
+                if (metrics.ArrangeTicks > _maxArrangeTicks) _maxArrangeTicks = metrics.ArrangeTicks;
+
                 ArrangeDuration = FormatTicks(metrics.ArrangeTicks);
+                AvgArrangeDuration = FormatTicks(_totalArrangeTicks / _arrangeCount);
+                MaxArrangeDuration = FormatTicks(_maxArrangeTicks);
             };
 
             // Subscribe to layout's request for refresh (e.g. during drag operation)
@@ -119,6 +143,24 @@ namespace SmartGrid.Controls
             private set => SetValue(LayoutDurationProperty, value);
         }
 
+        public static readonly DependencyProperty AvgLayoutDurationProperty =
+            DependencyProperty.Register(nameof(AvgLayoutDuration), typeof(string), typeof(SmartGridView), new PropertyMetadata("0ms"));
+
+        public string AvgLayoutDuration
+        {
+            get => (string)GetValue(AvgLayoutDurationProperty);
+            private set => SetValue(AvgLayoutDurationProperty, value);
+        }
+
+        public static readonly DependencyProperty MaxLayoutDurationProperty =
+            DependencyProperty.Register(nameof(MaxLayoutDuration), typeof(string), typeof(SmartGridView), new PropertyMetadata("0ms"));
+
+        public string MaxLayoutDuration
+        {
+            get => (string)GetValue(MaxLayoutDurationProperty);
+            private set => SetValue(MaxLayoutDurationProperty, value);
+        }
+
         public static readonly DependencyProperty ArrangeDurationProperty =
             DependencyProperty.Register(nameof(ArrangeDuration), typeof(string), typeof(SmartGridView), new PropertyMetadata("0ms"));
 
@@ -126,6 +168,24 @@ namespace SmartGrid.Controls
         {
             get => (string)GetValue(ArrangeDurationProperty);
             private set => SetValue(ArrangeDurationProperty, value);
+        }
+
+        public static readonly DependencyProperty AvgArrangeDurationProperty =
+            DependencyProperty.Register(nameof(AvgArrangeDuration), typeof(string), typeof(SmartGridView), new PropertyMetadata("0ms"));
+
+        public string AvgArrangeDuration
+        {
+            get => (string)GetValue(AvgArrangeDurationProperty);
+            private set => SetValue(AvgArrangeDurationProperty, value);
+        }
+
+        public static readonly DependencyProperty MaxArrangeDurationProperty =
+            DependencyProperty.Register(nameof(MaxArrangeDuration), typeof(string), typeof(SmartGridView), new PropertyMetadata("0ms"));
+
+        public string MaxArrangeDuration
+        {
+            get => (string)GetValue(MaxArrangeDurationProperty);
+            private set => SetValue(MaxArrangeDurationProperty, value);
         }
 
         public object ItemsSource
@@ -462,6 +522,24 @@ namespace SmartGrid.Controls
         private struct CardStateSnapshot : ICardState
         {
             public bool IsExpanded { get; set; }
+        }
+        public void ResetMetrics()
+        {
+            _totalLayoutTicks = 0;
+            _maxLayoutTicks = 0;
+            _layoutCount = 0;
+
+            _totalArrangeTicks = 0;
+            _maxArrangeTicks = 0;
+            _arrangeCount = 0;
+
+            LayoutDuration = "0ms";
+            AvgLayoutDuration = "0ms";
+            MaxLayoutDuration = "0ms";
+
+            ArrangeDuration = "0ms";
+            AvgArrangeDuration = "0ms";
+            MaxArrangeDuration = "0ms";
         }
     }
 }

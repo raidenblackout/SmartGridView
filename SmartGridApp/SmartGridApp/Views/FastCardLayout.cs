@@ -101,79 +101,71 @@ namespace SmartGrid.Views
             var visibleRect = context.RealizationRect;
             int itemCount = context.ItemCount;
 
+            // Report metrics based on TRUE visible rect (ManualViewport) or fallback to realization
+            Rect trueVisible = _manualViewport ?? visibleRect;
+
             // "Passive Measurement": We just look up the Rects for the visible range
             // Optimize finding the start index using Binary Search
-            int startIndex = FindFirstVisibleIndex(visibleRect.Top);
+            // We use the Min of both Tops to ensure we catch everything
+            double searchTop = Math.Min(visibleRect.Top, trueVisible.Top);
+            int startIndex = FindFirstVisibleIndex(searchTop);
 
-            for (int i = startIndex; i < itemCount; i++)
+            int realizedCount = 0;
+            int visibleRangeStart = -1;
+            int visibleRangeEnd = -1;
+
+            int i = startIndex;
+            for (; i < itemCount; i++)
             {
                 // Safety check
                 if (i >= _currentSchema.ItemRects.Count) break;
 
                 var rect = _currentSchema.ItemRects[i];
 
-                // Stop if we are past the viewport
-                if (rect.Top > visibleRect.Bottom)
+                // Check termination conditions
+                // We must continue as long as we are within EITHER visibleRect OR trueVisible
+                bool inRealization = rect.Top <= visibleRect.Bottom;
+                bool inTrueVisible = rect.Top <= trueVisible.Bottom;
+
+                if (!inRealization && !inTrueVisible)
                 {
                     break;
                 }
 
+                // --- ARRANGE LOGIC ---
                 // If element is completely above the viewport...
-                if (rect.Bottom < visibleRect.Top)
+                // (Only skip if it's outside Realization)
+                if (rect.Bottom >= visibleRect.Top && rect.Top <= visibleRect.Bottom)
                 {
-                    continue;
-                }
+                    int dataIndex = (_currentSchema.IndexMapping != null && i < _currentSchema.IndexMapping.Length)
+                                 ? _currentSchema.IndexMapping[i]
+                                 : i;
 
-                // Position the element
-                // We must use the Mapping if it exists, otherwise visual slot 'i' always draws data item 'i'
-                int dataIndex = (_currentSchema.IndexMapping != null && i < _currentSchema.IndexMapping.Length)
-                                ? _currentSchema.IndexMapping[i]
-                                : i;
+                    var element = context.GetOrCreateElementAt(dataIndex);
+                    element.Arrange(rect);
 
-                var element = context.GetOrCreateElementAt(dataIndex);
-                element.Arrange(rect);
-
-                // Ghosting Logic (Compare against dataIndex)
-                if (_draggingIndex.HasValue && dataIndex == _draggingIndex.Value)
-                {
-                    element.Opacity = 0.4; // Visual feedback for original item while dragging
-                }
-                else
-                {
-                    element.Opacity = 1.0;
-                }
-            }
-
-            // Report metrics based on TRUE visible rect (ManualViewport) or fallback to realization
-            Rect trueVisible = _manualViewport ?? visibleRect;
-
-            int realizedCount = 0;
-            int start = -1;
-            int end = -1;
-
-            if (itemCount > 0)
-            {
-                // We calculate visibility against trueVisible
-                for (int i = startIndex; i < itemCount; i++)
-                {
-                    if (i >= _currentSchema.ItemRects.Count) break;
-                    var rect = _currentSchema.ItemRects[i];
-
-                    // Item is visible if it intersects trueVisible
-                    bool isVisible = rect.Left < trueVisible.Right && rect.Right > trueVisible.Left &&
-                                     rect.Top < trueVisible.Bottom && rect.Bottom > trueVisible.Top;
-
-                    if (isVisible)
+                    // Ghosting Logic
+                    if (_draggingIndex.HasValue && dataIndex == _draggingIndex.Value)
                     {
-                        if (start == -1) start = i;
-                        end = i;
-                        realizedCount++;
+                        element.Opacity = 0.4;
                     }
-                    else if (rect.Top > trueVisible.Bottom)
+                    else
                     {
-                        // Optimization: Sequential layout means we can stop if we pass the bottom
-                        break;
+                        element.Opacity = 1.0;
                     }
+                }
+
+                // --- METRICS LOGIC ---
+                // Item is visible if it intersects trueVisible
+                // We use a slightly more optimized check or just the standard intersection
+                bool isVisible = rect.Left < trueVisible.Right && rect.Right > trueVisible.Left &&
+                                 rect.Top < trueVisible.Bottom && rect.Bottom > trueVisible.Top;
+
+                if (isVisible)
+                {
+                    if (visibleRangeStart == -1) visibleRangeStart = i;
+                    visibleRangeEnd = i;
+                    realizedCount++;
                 }
             }
 
@@ -181,14 +173,14 @@ namespace SmartGrid.Views
             long arrangeTicks = sw.ElapsedTicks;
             long layoutTicks = _currentSchema?.CalculationTimeTicks ?? 0;
 
-            MetricsUpdated?.Invoke(this, new LayoutMetrics(itemCount, realizedCount, start, end, trueVisible, layoutTicks, arrangeTicks));
+            MetricsUpdated?.Invoke(this, new LayoutMetrics(itemCount, realizedCount, visibleRangeStart, visibleRangeEnd, trueVisible, layoutTicks, arrangeTicks));
 
             return finalSize;
         }
 
         public event System.EventHandler<LayoutMetrics>? MetricsUpdated;
 
-        public record LayoutMetrics(
+        public readonly record struct LayoutMetrics(
             int TotalItems,
             int RealizedItems,
             int StartIndex,

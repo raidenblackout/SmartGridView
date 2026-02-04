@@ -53,4 +53,9 @@ public sealed partial class MainPage : Page
             e.Handled = true;
         }
     }
+
+    private void OnResetMetricsClicked(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        GridControl.ResetMetrics();
+    }
 }
