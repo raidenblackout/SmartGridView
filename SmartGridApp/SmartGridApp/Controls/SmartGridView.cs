@@ -13,7 +13,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using SmartGrid.Core;
 using SmartGrid.Views;
-using SmartGridApp;
 
 namespace SmartGrid.Controls
 {
@@ -189,12 +188,6 @@ namespace SmartGrid.Controls
                     _scroller.VerticalOffset,
                     _scroller.ViewportWidth,
                     _scroller.ViewportHeight);
-
-                // Save offset to ViewModel for persistence
-                if (this.DataContext is MainViewModel vm)
-                {
-                    vm.ScrollOffset = _scroller.VerticalOffset;
-                }
             }
         }
 
@@ -229,12 +222,6 @@ namespace SmartGrid.Controls
             if (ItemsSource is IEnumerable<IExpandableItem> items && this.ActualWidth > 0 && !_layout.HasSchema)
             {
                 _ = RecalculateLayoutAsync(items);
-            }
-
-            // Restore scroll position from ViewModel
-            if (_scroller != null && this.DataContext is MainViewModel vm && vm.ScrollOffset > 0)
-            {
-                _scroller.ChangeView(null, vm.ScrollOffset, null, true);
             }
         }
 

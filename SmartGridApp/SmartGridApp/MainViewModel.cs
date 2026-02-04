@@ -32,9 +32,6 @@ namespace SmartGridApp
         [ObservableProperty]
         private int _cardCount = 100;
 
-        [ObservableProperty]
-        private double _scrollOffset;
-
         public MainViewModel()
         {
             UpdateCardCollection();

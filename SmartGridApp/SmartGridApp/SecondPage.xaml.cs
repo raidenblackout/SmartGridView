@@ -25,10 +25,7 @@ namespace SmartGridApp
 
         private void OnBackClicked(object sender, RoutedEventArgs e)
         {
-            if (this.Frame.CanGoBack)
-            {
-                this.Frame.GoBack();
-            }
+            this.Frame.Navigate(typeof(MainPage));
         }
 
         private void OnExpandClicked(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
