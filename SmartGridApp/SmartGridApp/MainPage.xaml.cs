@@ -27,6 +27,11 @@ public sealed partial class MainPage : Page
         this.Frame.Navigate(typeof(SecondPage));
     }
 
+    private void OnTestListViewClicked(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        this.Frame.Navigate(typeof(ThirdPage));
+    }
+
     private void OnExpandClicked(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
         if (sender is Microsoft.UI.Xaml.FrameworkElement fe && fe.DataContext is CardViewModel vm)

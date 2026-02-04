@@ -10,15 +10,11 @@
             <Setter.Value>
                 <ControlTemplate TargetType="local:SmartGridView">
                     <Grid Background="{TemplateBinding Background}">
-                        <ScrollViewer ZoomMode="Disabled" 
-                                      HorizontalScrollMode="Disabled" 
-                                      VerticalScrollMode="Auto">
-                            <ItemsRepeater x:Name="PART_Repeater" 
-                                           ItemsSource="{TemplateBinding ItemsSource}"
-                                           ItemTemplate="{TemplateBinding ItemTemplate}"
-                                           VerticalCacheLength="0"
-                                           HorizontalCacheLength="0" />
-                        </ScrollViewer>
+                        <ItemsRepeater x:Name="PART_Repeater" 
+                                       ItemsSource="{TemplateBinding ItemsSource}"
+                                       ItemTemplate="{TemplateBinding ItemTemplate}"
+                                       VerticalCacheLength="0"
+                                       HorizontalCacheLength="0" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

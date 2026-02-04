@@ -19,10 +19,9 @@ namespace SmartGrid.Controls
     public sealed class SmartGridView : Control
     {
         private ItemsRepeater? _repeater;
-        private ScrollViewer? _scroller;
         private FastCardLayout _layout;
         private SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
-        private CancellationTokenSource? _navigatingCts = new CancellationTokenSource(); // Initialized
+        private CancellationTokenSource? _navigatingCts = new CancellationTokenSource();
 
         public SmartGridView()
         {
@@ -51,6 +50,9 @@ namespace SmartGrid.Controls
             this.Unloaded += OnUnloaded;
             this.SizeChanged += OnSizeChanged;
 
+            // Use EffectiveViewportChanged for robust nested virtualization (ListView/Hub support)
+            this.EffectiveViewportChanged += OnEffectiveViewportChanged;
+
             // Enable Drop on the Grid itself
             this.AllowDrop = true;
             this.DragOver += OnDragOver;
@@ -78,7 +80,7 @@ namespace SmartGrid.Controls
         public int VisibleItemsCount
         {
             get => (int)GetValue(VisibleItemsCountProperty);
-            private set => SetValue(VisibleItemsCountProperty, value);
+            set => SetValue(VisibleItemsCountProperty, value);
         }
 
         public static readonly DependencyProperty VisibleRangeStartProperty =
@@ -87,7 +89,7 @@ namespace SmartGrid.Controls
         public int VisibleRangeStart
         {
             get => (int)GetValue(VisibleRangeStartProperty);
-            private set => SetValue(VisibleRangeStartProperty, value);
+            set => SetValue(VisibleRangeStartProperty, value);
         }
 
         public static readonly DependencyProperty VisibleRangeEndProperty =
@@ -96,7 +98,7 @@ namespace SmartGrid.Controls
         public int VisibleRangeEnd
         {
             get => (int)GetValue(VisibleRangeEndProperty);
-            private set => SetValue(VisibleRangeEndProperty, value);
+            set => SetValue(VisibleRangeEndProperty, value);
         }
 
         public static readonly DependencyProperty ViewportRectStringProperty =
@@ -162,33 +164,22 @@ namespace SmartGrid.Controls
                 _repeater.ElementPrepared += OnElementPrepared;
             }
 
-            _scroller = FindVisualParent<ScrollViewer>(_repeater);
-            if (_scroller != null)
-            {
-                _scroller.ViewChanged -= OnScrollViewerViewChanged;
-                _scroller.ViewChanged += OnScrollViewerViewChanged;
-                UpdateViewport();
-            }
-
             base.OnApplyTemplate();
         }
 
-        private void OnScrollViewerViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
+        private void OnEffectiveViewportChanged(FrameworkElement sender, EffectiveViewportChangedEventArgs args)
         {
-            UpdateViewport();
+            // The EffectiveViewport provides the visible rect in the control's coordinate space.
+            // This works perfectly even when nested inside a ListView or ScrollViewer.
+            UpdateViewport(args.EffectiveViewport);
         }
 
-        private void UpdateViewport()
+        private void UpdateViewport(Rect viewport)
         {
-            if (_scroller != null)
-            {
-                // System.Console.WriteLine($">>>> SmartGridView UpdateViewport: Offset={_scroller.VerticalOffset}");
-                _layout.ManualViewport = new Rect(
-                    _scroller.HorizontalOffset,
-                    _scroller.VerticalOffset,
-                    _scroller.ViewportWidth,
-                    _scroller.ViewportHeight);
-            }
+            _layout.ManualViewport = viewport;
+
+            // Sync textual representation for debug bar
+            ViewportRectString = $"{viewport.X:F0}, {viewport.Y:F0}, {viewport.Width:F0}x{viewport.Height:F0}";
         }
 
         private T? FindVisualParent<T>(DependencyObject? child) where T : class, DependencyObject
