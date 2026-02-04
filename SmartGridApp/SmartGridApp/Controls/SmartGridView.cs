@@ -19,6 +19,7 @@ namespace SmartGrid.Controls
     public sealed class SmartGridView : Control
     {
         private ItemsRepeater? _repeater;
+        private ScrollViewer? _scroller;
         private FastCardLayout _layout;
         private SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
         private CancellationTokenSource? _navigatingCts = new CancellationTokenSource(); // Initialized
@@ -35,6 +36,9 @@ namespace SmartGrid.Controls
                 VisibleRangeStart = metrics.StartIndex;
                 VisibleRangeEnd = metrics.EndIndex;
                 ViewportRectString = $"{metrics.Viewport.X:F0}, {metrics.Viewport.Y:F0}, {metrics.Viewport.Width:F0}x{metrics.Viewport.Height:F0}";
+
+                LayoutDuration = FormatTicks(metrics.LayoutTicks);
+                ArrangeDuration = FormatTicks(metrics.ArrangeTicks);
             };
 
             // Subscribe to layout's request for refresh (e.g. during drag operation)
@@ -104,6 +108,24 @@ namespace SmartGrid.Controls
             private set => SetValue(ViewportRectStringProperty, value);
         }
 
+        public static readonly DependencyProperty LayoutDurationProperty =
+            DependencyProperty.Register(nameof(LayoutDuration), typeof(string), typeof(SmartGridView), new PropertyMetadata("0ms"));
+
+        public string LayoutDuration
+        {
+            get => (string)GetValue(LayoutDurationProperty);
+            private set => SetValue(LayoutDurationProperty, value);
+        }
+
+        public static readonly DependencyProperty ArrangeDurationProperty =
+            DependencyProperty.Register(nameof(ArrangeDuration), typeof(string), typeof(SmartGridView), new PropertyMetadata("0ms"));
+
+        public string ArrangeDuration
+        {
+            get => (string)GetValue(ArrangeDurationProperty);
+            private set => SetValue(ArrangeDurationProperty, value);
+        }
+
         public object ItemsSource
         {
             get => GetValue(ItemsSourceProperty);
@@ -141,7 +163,57 @@ namespace SmartGrid.Controls
                 // Subscribe to element prepared for DragStarting setup
                 _repeater.ElementPrepared += OnElementPrepared;
             }
+
+            // Find ScrollViewer to track TRUE viewport
+            _scroller = FindVisualParent<ScrollViewer>(_repeater);
+            if (_scroller != null)
+            {
+                _scroller.ViewChanged += OnScrollViewerViewChanged;
+                UpdateViewport();
+            }
+
             base.OnApplyTemplate();
+        }
+
+        private void OnScrollViewerViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
+        {
+            UpdateViewport();
+        }
+
+        private void UpdateViewport()
+        {
+            if (_scroller != null)
+            {
+                _layout.ManualViewport = new Rect(
+                    _scroller.HorizontalOffset,
+                    _scroller.VerticalOffset,
+                    _scroller.ViewportWidth,
+                    _scroller.ViewportHeight);
+            }
+        }
+
+        private T? FindVisualParent<T>(DependencyObject? child) where T : class, DependencyObject
+        {
+            DependencyObject? parentObject = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(child);
+            if (parentObject == null) return null;
+            if (parentObject is T parent) return parent;
+            return FindVisualParent<T>(parentObject);
+        }
+
+        private string FormatTicks(long ticks)
+        {
+            double ms = (double)ticks / System.Diagnostics.Stopwatch.Frequency * 1000;
+            if (ms < 1)
+            {
+                double us = ms * 1000;
+                if (us < 1)
+                {
+                    double ns = us * 1000;
+                    return $"{ns:F0}ns";
+                }
+                return $"{us:F0}µs";
+            }
+            return $"{ms:F2}ms";
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)

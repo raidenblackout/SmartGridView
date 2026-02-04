@@ -62,6 +62,14 @@
                       <TextBlock Text="{x:Bind GridControl.VisibleRangeEnd, Mode=OneWay}" Foreground="White" FontWeight="Bold" FontSize="13"/>
                   </StackPanel>
                   <StackPanel Orientation="Horizontal" Spacing="6">
+                      <TextBlock Text="Layout:" Foreground="#888888" FontSize="11" VerticalAlignment="Center"/>
+                      <TextBlock Text="{x:Bind GridControl.LayoutDuration, Mode=OneWay}" Foreground="#00E5FF" FontWeight="Bold" FontSize="12"/>
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                      <TextBlock Text="Arrange:" Foreground="#888888" FontSize="11" VerticalAlignment="Center"/>
+                      <TextBlock Text="{x:Bind GridControl.ArrangeDuration, Mode=OneWay}" Foreground="#00E5FF" FontWeight="Bold" FontSize="12"/>
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="6">
                       <TextBlock Text="Viewport:" Foreground="#888888" FontSize="11" VerticalAlignment="Center"/>
                       <TextBlock Text="{x:Bind GridControl.ViewportRectString, Mode=OneWay}" Foreground="#AAAAAA" FontSize="11" VerticalAlignment="Center"/>
                   </StackPanel>

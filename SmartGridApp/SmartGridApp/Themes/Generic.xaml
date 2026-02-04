@@ -13,7 +13,9 @@
                                       VerticalScrollMode="Auto">
                             <ItemsRepeater x:Name="PART_Repeater" 
                                            ItemsSource="{TemplateBinding ItemsSource}"
-                                           ItemTemplate="{TemplateBinding ItemTemplate}" />
+                                           ItemTemplate="{TemplateBinding ItemTemplate}"
+                                           VerticalCacheLength="0"
+                                           HorizontalCacheLength="0" />
                         </ScrollViewer>
                     </Grid>
                 </ControlTemplate>

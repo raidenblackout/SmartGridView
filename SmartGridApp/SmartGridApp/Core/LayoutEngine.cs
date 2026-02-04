@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Windows.Foundation; // For Rect
 
 namespace SmartGrid.Core
@@ -19,6 +19,9 @@ namespace SmartGrid.Core
 
         public double TotalHeight { get; set; }
         public double MaxItemHeight { get; set; }
+
+        // Performance Metrics (Ticks)
+        public long CalculationTimeTicks { get; set; }
     }
 
     public struct LayoutConfig
@@ -38,6 +41,7 @@ namespace SmartGrid.Core
         // Pure function: Input (Data + Width) -> Output (Geometry)
         public static LayoutSchema Calculate(IList<ICardState> items, double viewportWidth, LayoutConfig config, int? dragIdx = null, int? targetIdx = null)
         {
+            var sw = Stopwatch.StartNew();
             var schema = new LayoutSchema();
             if (items.Count == 0) return schema;
 
@@ -132,6 +136,9 @@ namespace SmartGrid.Core
             }
             schema.TotalHeight = maxBottom;
             schema.MaxItemHeight = Math.Max(config.SmallSize.Height, config.LargeSize.Height);
+
+            sw.Stop();
+            schema.CalculationTimeTicks = sw.ElapsedTicks;
 
             return schema;
         }

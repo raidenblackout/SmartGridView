@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using Windows.Foundation;
 using Microsoft.UI.Xaml.Controls;
 using SmartGrid.Core;
@@ -10,6 +11,13 @@ namespace SmartGrid.Views
         private LayoutSchema? _currentSchema;
         private int? _draggingIndex = null;
         private int? _targetIndex = null;
+        private Rect? _manualViewport = null;
+
+        public Rect? ManualViewport
+        {
+            get => _manualViewport;
+            set { _manualViewport = value; InvalidateArrange(); }
+        }
 
         // Called by ViewModel/SmartGridView when background math is finished
         public void SwapSchema(LayoutSchema newSchema)
@@ -85,6 +93,7 @@ namespace SmartGrid.Views
 
         protected override Size ArrangeOverride(VirtualizingLayoutContext context, Size finalSize)
         {
+            var sw = Stopwatch.StartNew();
             if (_currentSchema == null) return finalSize;
 
             var visibleRect = context.RealizationRect;
@@ -133,34 +142,58 @@ namespace SmartGrid.Views
                 }
             }
 
-            // Report metrics
+            // Report metrics based on TRUE visible rect (ManualViewport) or fallback to realization
+            Rect trueVisible = _manualViewport ?? visibleRect;
+
             int realizedCount = 0;
             int start = -1;
             int end = -1;
 
             if (itemCount > 0)
             {
-                // Simple estimate for visual feedback
-                start = startIndex;
-                // Finding true realized range
+                // We calculate visibility against trueVisible
                 for (int i = startIndex; i < itemCount; i++)
                 {
                     if (i >= _currentSchema.ItemRects.Count) break;
                     var rect = _currentSchema.ItemRects[i];
-                    if (rect.Top > visibleRect.Bottom) { end = i - 1; break; }
-                    if (i == itemCount - 1) end = i;
-                    realizedCount++;
+
+                    // Item is visible if it intersects trueVisible
+                    bool isVisible = rect.Left < trueVisible.Right && rect.Right > trueVisible.Left &&
+                                     rect.Top < trueVisible.Bottom && rect.Bottom > trueVisible.Top;
+
+                    if (isVisible)
+                    {
+                        if (start == -1) start = i;
+                        end = i;
+                        realizedCount++;
+                    }
+                    else if (rect.Top > trueVisible.Bottom)
+                    {
+                        // Optimization: Sequential layout means we can stop if we pass the bottom
+                        break;
+                    }
                 }
             }
 
-            MetricsUpdated?.Invoke(this, new LayoutMetrics(itemCount, realizedCount, start, end, visibleRect));
+            sw.Stop();
+            long arrangeTicks = sw.ElapsedTicks;
+            long layoutTicks = _currentSchema?.CalculationTimeTicks ?? 0;
+
+            MetricsUpdated?.Invoke(this, new LayoutMetrics(itemCount, realizedCount, start, end, trueVisible, layoutTicks, arrangeTicks));
 
             return finalSize;
         }
 
         public event System.EventHandler<LayoutMetrics>? MetricsUpdated;
 
-        public record LayoutMetrics(int TotalItems, int RealizedItems, int StartIndex, int EndIndex, Rect Viewport);
+        public record LayoutMetrics(
+            int TotalItems,
+            int RealizedItems,
+            int StartIndex,
+            int EndIndex,
+            Rect Viewport,
+            long LayoutTicks,
+            long ArrangeTicks);
 
         private int FindFirstVisibleIndex(double viewportTop)
         {
